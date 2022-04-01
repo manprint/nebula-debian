@@ -32,11 +32,11 @@ clean_docker_build: ## Clear docker build structure
 
 build: ## Build nebula image
 	@docker build --force-rm --rm --tag ${IMAGE_NAME} .
-	$(MAKE) clean_docker_build
+	make -f MakefileDev clean_docker_build
 
 build_no_cache: ## Build docker image no cache
 	@docker build --no-cache --force-rm --rm --tag ${IMAGE_NAME} .
-	$(MAKE) clean_docker_build
+	make -f MakefileDev clean_docker_build
 
 pull: ## Pull image
 	@docker pull $(IMAGE_NAME)
@@ -45,7 +45,7 @@ publish: build_no_cache ## Push image
 	@echo "$(RED)Create in repo folder the "github.token" file for publish image...$(RESET)"
 	cat github.token | docker login ghcr.io -u manprint --password-stdin
 	@docker push $(IMAGE_NAME)
-	$(MAKE) clean_docker_build
+	make -f MakefileDev clean_docker_build
 
 ##@ Configuration Nebula
 
