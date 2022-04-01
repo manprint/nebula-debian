@@ -1,6 +1,7 @@
 .PHONY: help \
+		clean_docker_build build build_no_cache pull publish \
 		retrive \
-		start stop down up connect \
+		start stop down up up_debug connect \
 
 TITLE_MAKEFILE=Nebula docker
 
@@ -22,6 +23,29 @@ help:
 	/^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2 } /^##@/ \
 	{ printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 	@echo
+
+##@ Build Nebula
+
+clean_docker_build: ## Clear docker build structure
+	@echo "y" | docker image prune
+	@echo "y" | docker builder prune
+
+build: ## Build nebula image
+	@docker build --force-rm --rm --tag ${IMAGE_NAME} .
+	$(MAKE) clean_docker_build
+
+build_no_cache: ## Build docker image no cache
+	@docker build --no-cache --force-rm --rm --tag ${IMAGE_NAME} .
+	$(MAKE) clean_docker_build
+
+pull: ## Pull image
+	@docker pull $(IMAGE_NAME)
+
+publish: build_no_cache ## Push image
+	@echo "$(RED)Create in repo folder the "github.token" file for publish image...$(RESET)"
+	cat github.token | docker login ghcr.io -u manprint --password-stdin
+	@docker push $(IMAGE_NAME)
+	$(MAKE) clean_docker_build
 
 ##@ Configuration Nebula
 
@@ -49,6 +73,19 @@ up: destroy ## Run the image
 		--volume=${CURRENT_DIR}/ca.crt:/root/nebula/certs/ca.crt:ro \
 		--volume=${CURRENT_DIR}/host.crt:/root/nebula/certs/host.crt:ro \
 		--volume=${CURRENT_DIR}/host.key:/root/nebula/certs/host.key:ro \
+		${IMAGE_NAME}
+
+up_debug: ## Run the image in debug mode (entrypoint=/bin/bash)
+	@docker run -dit \
+		--name=${CONTAINER_NAME} \
+		--hostname=nebula-srv \
+		--cap-add=NET_ADMIN \
+		--network=host \
+		--volume=${CURRENT_DIR}/config.yml:/root/nebula/config/config.yaml:ro \
+		--volume=${CURRENT_DIR}/ca.crt:/root/nebula/certs/ca.crt:ro \
+		--volume=${CURRENT_DIR}/host.crt:/root/nebula/certs/host.crt:ro \
+		--volume=${CURRENT_DIR}/host.key:/root/nebula/certs/host.key:ro \
+		--entrypoint=/bin/bash \
 		${IMAGE_NAME}
 
 ##@ Connect Nebula
