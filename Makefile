@@ -45,6 +45,7 @@ up: destroy ## Run the image
 		--hostname=nebula-srv \
 		--cap-add=NET_ADMIN \
 		--network=host \
+		--device=/dev/net/tun \
 		--volume=${CURRENT_DIR}/config.yml:/root/nebula/config/config.yaml:ro \
 		--volume=${CURRENT_DIR}/ca.crt:/root/nebula/certs/ca.crt:ro \
 		--volume=${CURRENT_DIR}/host.crt:/root/nebula/certs/host.crt:ro \
